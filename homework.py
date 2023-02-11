@@ -47,7 +47,7 @@ class Training:
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
 
-        pass
+        raise NotImplementedError
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -73,7 +73,10 @@ class Running(Training):
     CALORIES_MEAN_SPEED_SHIFT = 1.79
 
     def get_spent_calories(self) -> float:
-        return ((self.CALORIES_MEAN_SPEED_MULTIPLIER * super().get_mean_speed()) + self.CALORIES_MEAN_SPEED_SHIFT) * self.weight / self.M_IN_KM * (self.duration * self.MIN_IN_H)
+        return ((self.CALORIES_MEAN_SPEED_MULTIPLIER * super().get_mean_speed()
+                 ) + self.CALORIES_MEAN_SPEED_SHIFT
+                ) * self.weight / self.M_IN_KM * (self.duration * self.MIN_IN_H
+                                                  )
 
 
 @dataclass
@@ -92,19 +95,15 @@ class SportsWalking(Training):
     SEC_IN_HOUR = 3600
     KMH_IN_MSEC = round(Training.M_IN_KM / SEC_IN_HOUR, 3)
 
-    def get_mean_speed(self) -> float:
-        """Получить среднюю скорость движения."""
-
-        return super().get_mean_speed()
-
     def get_spent_calories(self) -> float:
-        mean_speed = self.get_mean_speed() * self.KMH_IN_MSEC
-        training_time_in_minutes = self.duration * self.MIN_IN_H
-        height_cm = self.height / self.CM_IN_M
+        """Надеюсь я правельно, понял убрав все одноразовые переменные?
+           потому, что return какойто сложноватый стал :)"""
+
         return ((self.CALORIES_WEIGHT_MULTIPLIER
-                 * self.weight + (mean_speed ** self.MULT / height_cm)
+                 * self.weight + ((self.get_mean_speed() * self.KMH_IN_MSEC)
+                                  ** self.MULT / (self.height / self.CM_IN_M))
                  * self.CALORIES_SPEED_HEIGHT_MULTIPLIER * self.weight
-                 ) * training_time_in_minutes)
+                 ) * (self.duration * self.MIN_IN_H))
 
 
 @dataclass
@@ -129,7 +128,7 @@ class Swimming(Training):
 
     def get_spent_calories(self) -> float:
         return ((self.get_mean_speed() + self.SWIMMING_MEAN_SPEED_SHIFT)
-                 * self.SWIMMING_MEAN_SPEED_MULTIPLIER
+                * self.SWIMMING_MEAN_SPEED_MULTIPLIER
                 ) * self.weight * self.duration
 
 
@@ -145,7 +144,6 @@ def read_package(workout_type: str, data: list) -> Training:
         return WORKOUT_TYPES[workout_type](*data)
     except KeyError as ke:
         print('Invalid workout type:', ke)
-
 
 
 def main(training: Training) -> None:
