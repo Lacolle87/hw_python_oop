@@ -11,15 +11,16 @@ class InfoMessage:
     distance: float
     speed: float
     calories: float
+    MESSAGE = (
+        'Тип тренировки: {}; '
+        'Длительность: {:.3f} ч.; '
+        'Дистанция: {:.3f} км; '
+        'Ср. скорость: {:.3f} км/ч; '
+        'Потрачено ккал: {:.3f}.'
+    )
 
     def get_message(self) -> str:
-        return (
-            f'Тип тренировки: {self.training_type}; '
-            f'Длительность: {"{:.3f}".format(self.duration)} ч.; '
-            f'Дистанция: {"{:.3f}".format(self.distance)} км; '
-            f'Ср. скорость: {"{:.3f}".format(self.speed)} км/ч; '
-            f'Потрачено ккал: {"{:.3f}".format(self.calories)}.'
-        )
+        return self.MESSAGE.format(*asdict(self).values())
 
 
 @dataclass
@@ -96,8 +97,8 @@ class SportsWalking(Training):
     KMH_IN_MSEC = round(Training.M_IN_KM / SEC_IN_HOUR, 3)
 
     def get_spent_calories(self) -> float:
-        """Надеюсь я правельно, понял убрав все одноразовые переменные?
-           потому, что return какойто сложноватый стал :)"""
+        """Надеюсь я правельно понял, убрав все одноразовые переменные?
+           Потому, что return какойто сложноватый стал :)"""
 
         return ((self.CALORIES_WEIGHT_MULTIPLIER
                  * self.weight + ((self.get_mean_speed() * self.KMH_IN_MSEC)
