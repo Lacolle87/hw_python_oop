@@ -1,5 +1,7 @@
 from dataclasses import asdict, dataclass
-from typing import Dict, Type
+import dataclasses
+from typing import Dict, Type, List
+# почемуто только так работает import тут, это нормально?
 
 
 @dataclass
@@ -72,12 +74,6 @@ class Running(Training):
     CALORIES_MEAN_SPEED_SHIFT = 1.79
 
     def get_spent_calories(self) -> float:
-        """Я не понимаю как их размещать и помещаться в 79 символов.
-           И при этом чтобы все было правильно,
-           без лишних скобок и бекслеша. Можешь мне на этом реальном примере
-           показать здесь, а особенно в гигантском return в SportWalking
-           как это делается и я надеюсь пойму принцип. Я их
-           туда-сюда двигаю, либо не помещается, либо flake8 не проходит"""
         return (self.CALORIES_MEAN_SPEED_MULTIPLIER
                 * super().get_mean_speed()
                 + self.CALORIES_MEAN_SPEED_SHIFT
@@ -130,31 +126,40 @@ class Swimming(Training):
 
     def get_spent_calories(self) -> float:
         return ((self.get_mean_speed()
-                 + self.SWIMMING_MEAN_SPEED_SHIFT
-                 ) * self.SWIMMING_MEAN_SPEED_MULTIPLIER
-                ) * self.weight * self.duration
+                 + self.SWIMMING_MEAN_SPEED_SHIFT)
+                * self.SWIMMING_MEAN_SPEED_MULTIPLIER
+                * self.weight * self.duration)
+
+# У меня проверку не проходило на яндексе, я уже так пробовал Type[Training]
+# Поэтому я как бы и непонял. но так пишит Unexpected argument: 154
+# Совершенно случайно в пачке заметил, что дело в 3.7 на сервере
 
 
-WORKOUT_TYPES: Dict[str, Type[any]] = {  # Не понял на самом деле
+WORKOUT_TYPES: Dict[str, Type[Training]] = {
     'SWM': Swimming,
     'RUN': Running,
     'WLK': SportsWalking
 }
 
 
-def read_package(workout_type: str, data: list) -> Training:
+def read_package(workout_type: str, data: List) -> Training:
     """Прочитать данные полученные от датчиков."""
     if workout_type not in WORKOUT_TYPES:
         raise ValueError(f'Wrong workout_type: {workout_type}. '
                          f'Available types: '
                          f'{", ".join(list(WORKOUT_TYPES.keys()))}')
-    return WORKOUT_TYPES[workout_type](*data)
+    elif len(dataclasses.fields(WORKOUT_TYPES[workout_type])) != len(data):
+        raise ValueError("Input data doesn't match")
+    else:
+        return WORKOUT_TYPES[workout_type](*data)
 
 
 def main(training: Training) -> None:
-    """Главная функция.
-    Try убрал, теперь такой проблемы нет"""
-    print(training.show_training_info().get_message())
+    """Главная функция."""
+    try:
+        print(training.show_training_info().get_message())
+    except Exception as err:
+        print(f"{type(err).__name__} was raised: {err}")
 
 
 if __name__ == '__main__':
