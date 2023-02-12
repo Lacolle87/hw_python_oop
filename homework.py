@@ -12,15 +12,15 @@ class InfoMessage:
     speed: float
     calories: float
     MESSAGE = (
-        'Тип тренировки: {}; '
-        'Длительность: {:.3f} ч.; '
-        'Дистанция: {:.3f} км; '
-        'Ср. скорость: {:.3f} км/ч; '
-        'Потрачено ккал: {:.3f}.'
+        'Тип тренировки: {training_type}; '
+        'Длительность: {duration:.3f} ч.; '
+        'Дистанция: {distance:.3f} км; '
+        'Ср. скорость: {speed:.3f} км/ч; '
+        'Потрачено ккал: {calories:.3f}.'
     )
 
     def get_message(self) -> str:
-        return self.MESSAGE.format(*asdict(self).values())
+        return self.MESSAGE.format(**asdict(self))
 
 
 @dataclass
@@ -37,22 +37,20 @@ class Training:
 
     def get_distance(self) -> float:
         """Получить дистанцию в км."""
-
         return self.action * self.LEN_STEP / self.M_IN_KM
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
-
         return self.get_distance() / self.duration
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Определите get_spent_calories в %s.'
+            % self.__class__.__name__)
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
-
         return InfoMessage(
             type(self).__name__,
             self.duration,
@@ -74,10 +72,17 @@ class Running(Training):
     CALORIES_MEAN_SPEED_SHIFT = 1.79
 
     def get_spent_calories(self) -> float:
-        return ((self.CALORIES_MEAN_SPEED_MULTIPLIER * super().get_mean_speed()
-                 ) + self.CALORIES_MEAN_SPEED_SHIFT
-                ) * self.weight / self.M_IN_KM * (self.duration * self.MIN_IN_H
-                                                  )
+        """Я не понимаю как их размещать и помещаться в 79 символов.
+           И при этом чтобы все было правильно,
+           без лишних скобок и бексплеша. Можешь мне на этом реальном примере
+           показать здесь, а особенно в гигантском return в SportWalking
+           как это делается и я надеюсь пойму принцип. Я их
+           туда-сюда двигаю, либо не помещается, либо flake8 не проходит"""
+        return (self.CALORIES_MEAN_SPEED_MULTIPLIER
+                * super().get_mean_speed()
+                + self.CALORIES_MEAN_SPEED_SHIFT
+                ) * self.weight / self.M_IN_KM * (
+                    self.duration * self.MIN_IN_H)
 
 
 @dataclass
@@ -97,14 +102,11 @@ class SportsWalking(Training):
     KMH_IN_MSEC = round(Training.M_IN_KM / SEC_IN_HOUR, 3)
 
     def get_spent_calories(self) -> float:
-        """Надеюсь я правельно понял, убрав все одноразовые переменные?
-           Потому, что return какойто сложноватый стал :)"""
-
-        return ((self.CALORIES_WEIGHT_MULTIPLIER
-                 * self.weight + ((self.get_mean_speed() * self.KMH_IN_MSEC)
-                                  ** self.MULT / (self.height / self.CM_IN_M))
-                 * self.CALORIES_SPEED_HEIGHT_MULTIPLIER * self.weight
-                 ) * (self.duration * self.MIN_IN_H))
+        return (self.CALORIES_WEIGHT_MULTIPLIER * self.weight + (
+                (self.get_mean_speed() * self.KMH_IN_MSEC
+                 ) ** self.MULT / (self.height / self.CM_IN_M)
+                ) * self.CALORIES_SPEED_HEIGHT_MULTIPLIER
+                * self.weight) * (self.duration * self.MIN_IN_H)
 
 
 @dataclass
@@ -123,37 +125,36 @@ class Swimming(Training):
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
-
-        return (self.length_pool
-                * self.count_pool) / self.M_IN_KM / self.duration
+        return (self.length_pool * self.count_pool
+                ) / self.M_IN_KM / self.duration
 
     def get_spent_calories(self) -> float:
-        return ((self.get_mean_speed() + self.SWIMMING_MEAN_SPEED_SHIFT)
-                * self.SWIMMING_MEAN_SPEED_MULTIPLIER
+        return ((self.get_mean_speed()
+                 + self.SWIMMING_MEAN_SPEED_SHIFT
+                 ) * self.SWIMMING_MEAN_SPEED_MULTIPLIER
                 ) * self.weight * self.duration
+
+
+WORKOUT_TYPES: Dict[str, type[Training]] = {
+    'SWM': Swimming,
+    'RUN': Running,
+    'WLK': SportsWalking
+}
 
 
 def read_package(workout_type: str, data: list) -> Training:
     """Прочитать данные полученные от датчиков."""
-
-    try:
-        WORKOUT_TYPES: Dict[str, type] = {
-            'SWM': Swimming,
-            'RUN': Running,
-            'WLK': SportsWalking
-        }
-        return WORKOUT_TYPES[workout_type](*data)
-    except KeyError as ke:
-        print('Invalid workout type:', ke)
+    if workout_type not in WORKOUT_TYPES:
+        raise ValueError(f'Wrong workout_type: {workout_type}. '
+                         f'Available types: '
+                         f'{", ".join(list(WORKOUT_TYPES.keys()))}')
+    return WORKOUT_TYPES[workout_type](*data)
 
 
 def main(training: Training) -> None:
-    """Главная функция."""
-
-    try:
-        print(training.show_training_info().get_message())
-    except AttributeError as ae:
-        print(ae)
+    """Главная функция.
+    Try убрал, теперь такой проблемы нет"""
+    print(training.show_training_info().get_message())
 
 
 if __name__ == '__main__':
