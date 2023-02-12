@@ -135,7 +135,7 @@ class Swimming(Training):
                 ) * self.weight * self.duration
 
 
-WORKOUT_TYPES: Dict[str, Type[any]] = { # Не понял на самом деле
+WORKOUT_TYPES: Dict[str, Type[any]] = {  # Не понял на самом деле
     'SWM': Swimming,
     'RUN': Running,
     'WLK': SportsWalking
