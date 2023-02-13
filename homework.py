@@ -1,7 +1,6 @@
 from dataclasses import asdict, dataclass
 import dataclasses
 from typing import Dict, Type, List
-# почемуто только так работает import тут, это нормально?
 
 
 @dataclass
@@ -130,10 +129,6 @@ class Swimming(Training):
                 * self.SWIMMING_MEAN_SPEED_MULTIPLIER
                 * self.weight * self.duration)
 
-# У меня проверку не проходило на яндексе, я уже так пробовал Type[Training]
-# Поэтому я как бы и непонял. но так пишит Unexpected argument: 154
-# Совершенно случайно в пачке заметил, что дело в 3.7 на сервере
-
 
 WORKOUT_TYPES: Dict[str, Type[Training]] = {
     'SWM': Swimming,
@@ -156,10 +151,7 @@ def read_package(workout_type: str, data: List) -> Training:
 
 def main(training: Training) -> None:
     """Главная функция."""
-    try:
-        print(training.show_training_info().get_message())
-    except Exception as err:
-        print(f"{type(err).__name__} was raised: {err}")
+    print(training.show_training_info().get_message())
 
 
 if __name__ == '__main__':
@@ -168,6 +160,8 @@ if __name__ == '__main__':
         ('RUN', [15000, 1.5, 75]),
         ('WLK', [9000, 1.5, 75, 180]),
     ]
-
-    for workout_type, data in packages:
-        main(read_package(workout_type, data))
+    try:
+        for workout_type, data in packages:
+            main(read_package(workout_type, data))
+    except Exception as err:
+        print(f"{type(err).__name__} was raised: {err}")
